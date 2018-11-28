@@ -191,12 +191,27 @@ export default class RadixUniverse {
 
     /**
      * Close all open connections
-     * Recommended to call this before quitting the application, so that nodes can close the corresponding open connections as well
+     * 
+     * NOTE: Recommended to call this before quitting the application, so that nodes can close the corresponding open connections as well
      */
-    public closeAllConnections = () => {
-        for (const connection of this.connectedNodes) {
-            connection.close()
-        }
+    public closeAllConnections(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const closedConnections = new Array<Promise<any>>()
+            for (const connection of this.connectedNodes) {
+                closedConnections.push(connection.unsubscribeAll())
+            }
+    
+            Promise.all(closedConnections)
+                .then((result) => {
+                    for (const connection of this.connectedNodes) {
+                        connection.close()
+                    }
+                    resolve(result)
+                })
+                .catch((error) => {
+                    reject(error)
+                })
+        })
     }
 
     private canNodeServiceShard(node: RadixNode, shard: Long): boolean {
@@ -221,3 +236,4 @@ export default class RadixUniverse {
 }
 
 export const radixUniverse = new RadixUniverse()
+

@@ -27,14 +27,10 @@ export declare interface RadixNodeConnection {
 
 export class RadixNodeConnection extends events.EventEmitter {
     private pingInterval
-    private _socket: Client
-    private _subscriptions: {
-        [subscriberId: number]: Subject<RadixAtomUpdate>,
-    } = {}
 
-    private _atomUpdateSubjects: {
-        [subscriberId: number]: BehaviorSubject<any>
-    } = {}
+    private _socket: Client
+    private _subscriptions: { [subscriberId: number]: Subject<RadixAtomUpdate> } = {}
+    private _atomUpdateSubjects: { [subscriberId: number]: BehaviorSubject<any> } = {}
 
     private lastSubscriberId = 1
 
@@ -81,6 +77,7 @@ export class RadixNodeConnection extends events.EventEmitter {
             // }
 
             logger.info(`Connecting to ${this.address}`)
+
             this._socket = new Client(this.address, {
                 reconnect: false
             })
@@ -117,6 +114,56 @@ export class RadixNodeConnection extends events.EventEmitter {
 
                 resolve()
             })
+        })
+    }
+
+    /**
+     * Unsubcribes to a specific subscriberId
+     * 
+     * @param subscriberId - ID of the subscriber to be unsubscribed
+     * @returns A promise with the result of the unsubscription call result
+     */
+    public unsubscribe(subscriberId: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this._socket
+                .call('Atoms.cancel', {
+                    subscriberId,
+                })
+                .then((response: any) => {
+                    resolve(response)
+                })
+                .catch((error: any) => {
+                    reject(error)
+                })
+        })
+    }
+
+    /**
+     * Unsubscribes to all the subscriberIds of this node connection
+     * 
+     * @returns A promise with the address this node is connected to and a its list of subscriberIds
+     */
+    public unsubscribeAll(): Promise<any> {
+        return new Promise<any>((resolve, reject) => {
+            const unsubscriptions = new Array<Promise<any>>()
+            for (const subscriberId in this._subscriptions) {
+                unsubscriptions.push(this.unsubscribe(subscriberId))
+            }
+    
+            Promise.all(unsubscriptions)
+                .then((values) => {
+                    const result = {
+                        address: this.address,
+                        subscriberIds: [],
+                    }
+                    for (const subscriberId in this._subscriptions) {
+                        result.subscriberIds.push(subscriberId)
+                    }
+                    resolve(result)
+                })
+                .catch((error) => {
+                    reject(error)
+                })
         })
     }
 
@@ -316,3 +363,4 @@ export class RadixNodeConnection extends events.EventEmitter {
 }
 
 export default RadixNodeConnection
+
