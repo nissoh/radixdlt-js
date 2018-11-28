@@ -193,6 +193,8 @@ export default class RadixUniverse {
      * Close all open connections
      * 
      * NOTE: Recommended to call this before quitting the application, so that nodes can close the corresponding open connections as well
+     * 
+     * @returns A promise with a list of the disconnected nodes with their subscriberIds
      */
     public closeAllConnections(): Promise<any> {
         return new Promise((resolve, reject) => {

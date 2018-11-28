@@ -141,7 +141,7 @@ export class RadixNodeConnection extends events.EventEmitter {
     /**
      * Unsubscribes to all the subscriberIds of this node connection
      * 
-     * @returns A promise with the address this node is connected to and a its list of subscriberIds
+     * @returns A promise with the address this node is connected to and a list of its subscriberIds
      */
     public unsubscribeAll(): Promise<any> {
         return new Promise<any>((resolve, reject) => {
